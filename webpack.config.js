@@ -1,41 +1,103 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 const path = require('path');
 
-module.exports = {
-  entry: './src/app.js',
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist')
-  },
-  module: {
-    rules: [
-      {
-        test: /\.(scss)$/,
-        use: [
-          {
-            // Adds CSS to the DOM by injecting a `<style>` tag
-            loader: 'style-loader'
-          },
-          {
-            // Interprets `@import` and `url()` like `import/require()` and will resolve them
-            loader: 'css-loader'
-          },
-          {
-            // Loader for webpack to process CSS with PostCSS
-            loader: 'postcss-loader',
+module.exports = function(){
+  return {
+    mode: 'development',
+    entry: [
+      './src/app.js'
+    ],
+    watch: true,
+    watchOptions: {
+      aggregateTimeout: 300, // Process all changes which happened in this time into one rebuild
+      poll: 1000, // Check for changes every second,
+      ignored: /node_modules/,
+      // ignored: [
+      //   '**/*.scss', '/node_modules/'
+      // ]
+    },
+    devtool: 'source-maps',
+    devServer: {
+      contentBase: path.join(__dirname, 'src'),
+      watchContentBase: true,
+      hot: true,
+      open: true,
+      inline: true
+    },
+    plugins: [
+      new HtmlWebpackPlugin({
+        title: 'Webpack starter project',
+        template: path.resolve('./src/index.html')
+      }),
+      new webpack.HotModuleReplacementPlugin()
+    ],
+    module: {
+      rules: [
+        {
+          test: /\.scss$/,
+          use: [
+            'style-loader',
+            "css-loader",
+            "sass-loader"
+          ]
+        },
+        {
+          test: /\.m?js$/,
+          exclude: /(node_modules|bower_components)/,
+          use: {
+            loader: 'babel-loader',
             options: {
-              plugins: function () {
-                return [
-                  require('autoprefixer')
-                ];
+              presets: ['@babel/preset-env']
+            }
+          }
+        },
+        {
+          test: /\.(pdf|doc|docx|xls|xlsx|txt|csv|tsv)$/,
+          use: [
+            {
+              loader: "file-loader",
+              options: {
+                outputPath: './files',
+                name: "[name].[ext]",
+              },
+            }
+          ]
+        },
+        {
+          test: /\.(jpg|jpeg|gif|png|svg|webp)$/,
+          use: [
+            {
+              loader: "file-loader",
+              options: {
+                outputPath: './images',
+                name: "[name].[ext]",
+              },
+            },
+          ]
+        },
+        {
+          test: /\.(woff(2)?|ttf|otf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: '[name].[ext]',
+                outputPath: 'fonts/'
               }
             }
-          },
-          {
-            // Loads a SASS/SCSS file and compiles it to CSS
-            loader: 'sass-loader'
+          ]
+        },
+        {
+          test: /\.html$/,
+          use: {
+            loader: 'html-loader',
+            options: {
+              attrs: [':src', ':href']
+            }
           }
-        ]
-      }
-    ]
-  }
-};
+        },
+      ]
+    }
+  };
+}
